@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Design Workflow in the AI Era</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper:    #FAF1E2;
+    --paper-d:  #F2E5CF;
+    --paper-vd: #E8D7B6;
+    --ink:      #B53D2A;
+    --ink-dp:   #8E2D1F;
+    --rule:     #B53D2A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #0a0a0a; overflow: hidden; }
+  body {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    color: var(--ink);
+  }
+
+  .deck { position: fixed; inset: 0; display: grid; place-items: center; }
+  .stage {
+    position: relative;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+    background: var(--paper);
+  }
+  .stage::before {
+    content: '';
+    position: absolute; inset: 0;
+    pointer-events: none;
+    opacity: 0.10;
+    background-image: radial-gradient(circle at 1px 1px, rgba(181,61,42,0.5) 0.5px, transparent 1px);
+    background-size: 4px 4px;
+    z-index: 1;
+  }
+
+  .slide {
+    position: absolute; inset: 0;
+    opacity: 0; pointer-events: none;
+    transition: opacity 280ms ease;
+    z-index: 2;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; }
+
+  /* ─── TYPE SYSTEM ─── */
+  .disp {
+    font-family: 'Bricolage Grotesque', 'Noto Serif SC', sans-serif;
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .body-it {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+  .body-ro {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .pagenum {
+    position: absolute;
+    right: clamp(36px, 3.6vw, 80px);
+    bottom: clamp(40px, 4vh, 64px);
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(14px, 0.95vw, 16px);
+    color: var(--ink);
+    letter-spacing: 0.02em;
+    z-index: 9;
+  }
+  .nav-hint {
+    position: fixed;
+    left: clamp(36px, 3.6vw, 80px);
+    bottom: clamp(40px, 4vh, 64px);
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(11px, 0.78vw, 13px);
+    color: var(--ink);
+    letter-spacing: 0.02em;
+    opacity: 0.45;
+    z-index: 12;
+    pointer-events: none;
+  }
+
+  /* ─── REUSABLE ─── */
+  .pill {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    padding: clamp(8px, 1vh, 14px) clamp(20px, 2vw, 32px);
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(15px, 1.1vw, 20px);
+    color: var(--ink);
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .pill-divider {
+    color: var(--ink);
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(18px, 1.4vw, 24px);
+    line-height: 1;
+    align-self: center;
+    opacity: 0.7;
+  }
+  .ed-badge {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    width: clamp(34px, 2.6vw, 44px);
+    height: clamp(34px, 2.6vw, 44px);
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(15px, 1.05vw, 18px);
+    color: var(--ink);
+    line-height: 1;
+  }
+  .rect-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: clamp(7px, 0.9vh, 12px) clamp(14px, 1.4vw, 22px);
+    border: 1.5px solid var(--ink);
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(15px, 1.1vw, 20px);
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
+  /* ─── SLIDE 1 — COVER ─── */
+  .s-cover { background: var(--paper); }
+  .s-cover .grid {
+    position: absolute;
+    inset: clamp(60px, 6vh, 100px) clamp(60px, 5vw, 110px) clamp(110px, 11vh, 170px);
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: clamp(40px, 4vw, 80px);
+    z-index: 5;
+  }
+  .s-cover .left {
+    display: flex; flex-direction: column;
+    gap: clamp(18px, 2vh, 30px);
+  }
+  .s-cover .ed-row {
+    display: flex; align-items: center; gap: clamp(12px, 1.2vw, 18px);
+  }
+  .s-cover .ed-row .ed-label {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(20px, 1.6vw, 30px);
+    color: var(--ink);
+    line-height: 1;
+  }
+  .s-cover .title {
+    font-family: 'Noto Serif SC', 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: clamp(52px, min(7vw, 12vh), 120px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .s-cover .actions {
+    display: flex; gap: clamp(8px, 0.8vw, 14px); align-items: center;
+    flex-wrap: wrap;
+  }
+  .s-cover .stats {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(17px, 1.2vw, 22px);
+    line-height: 1.4;
+    color: var(--ink);
+  }
+  .s-cover .stats .num {
+    font-style: normal;
+    font-weight: 600;
+  }
+  .s-cover .left .bottom-block {
+    margin-top: auto;
+    display: flex; flex-direction: column;
+    gap: clamp(12px, 1.4vh, 22px);
+    align-items: flex-start;
+  }
+  .s-cover .tagline {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(18px, 1.4vw, 26px);
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 40ch;
+  }
+  .s-cover .right {
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: flex-end;
+    color: var(--ink);
+    text-align: right;
+  }
+  .s-cover .big-edition {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(140px, min(20vw, 34vh), 400px);
+    line-height: 0.86;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .s-cover .big-edition-lab {
+    margin-top: clamp(8px, 1vh, 16px);
+    font-family: 'Bricolage Grotesque', 'Noto Serif SC', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: clamp(15px, 1.1vw, 18px);
+    letter-spacing: 0.18em;
+    color: var(--ink);
+  }
+  .s-cover .big-edition-meta {
+    margin-top: clamp(20px, 2.4vh, 36px);
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(17px, 1.2vw, 22px);
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 30ch;
+    text-align: right;
+  }
+
+  /* ─── SLIDE 2 — WORKFLOW (menu layout) ─── */
+  .s-menu { background: var(--paper); }
+  .s-menu .frame {
+    position: absolute;
+    inset: clamp(40px, 4vh, 70px) clamp(120px, 12vw, 280px) clamp(110px, 11vh, 170px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 1.6vh, 24px);
+    z-index: 5;
+  }
+  .s-menu .top-row {
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center;
+    gap: clamp(8px, 1vh, 14px);
+  }
+  .s-menu .top-row .kicker {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(16px, 1.2vw, 20px);
+    color: var(--ink);
+  }
+  .s-menu .top-row .h {
+    font-family: 'Noto Serif SC', 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: clamp(40px, min(4.5vw, 7.5vh), 90px);
+    line-height: 1;
+    color: var(--ink);
+  }
+  .s-menu .courses {
+    display: flex; flex-direction: column;
+    gap: 0;
+  }
+  .s-menu .course {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: clamp(10px, 1vw, 20px);
+    align-items: center;
+    padding: clamp(10px, 1.2vh, 18px) 0;
+    border-bottom: 1px solid rgba(181, 61, 42, 0.32);
+  }
+  .s-menu .course .num-tag {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(16px, 1.1vw, 20px);
+    color: var(--ink);
+    line-height: 1;
+  }
+  .s-menu .course .item {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .s-menu .course .item .nm {
+    font-family: 'Bricolage Grotesque', 'Noto Serif SC', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: clamp(18px, 1.3vw, 24px);
+    line-height: 1.15;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+  .s-menu .course .item .desc {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(14px, 0.95vw, 16px);
+    line-height: 1.4;
+    color: var(--ink);
+    max-width: 60ch;
+  }
+  .s-menu .course .pair-tag {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(13px, 0.9vw, 15px);
+    color: var(--ink);
+    text-align: right;
+    white-space: nowrap;
+    opacity: 0.78;
+  }
+
+  /* ─── SLIDE 3 — PAIN POINT (quote layout) ─── */
+  .s-quote { background: var(--paper); }
+  .s-quote .frame {
+    position: absolute;
+    inset: clamp(96px, 10vh, 160px) clamp(120px, 12vw, 280px) clamp(150px, 14vh, 220px);
+    display: flex; flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 5;
+  }
+  .s-quote .right {
+    display: flex; flex-direction: column;
+    gap: clamp(18px, 2vh, 32px);
+    align-items: center;
+    width: 100%;
+  }
+  .s-quote .right .kicker {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(16px, 1.2vw, 20px);
+    color: var(--ink);
+  }
+  .s-quote .right .qbody {
+    font-family: 'Noto Serif SC', 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: clamp(32px, min(4vw, 6.5vh), 80px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .s-quote .right .qbody .it-emph {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    line-height: 1;
+  }
+  .s-quote .right .who-row {
+    display: flex; flex-direction: column; gap: 4px;
+    border-top: 1.5px solid var(--ink);
+    padding-top: clamp(12px, 1.4vh, 20px);
+    align-items: center;
+  }
+  .s-quote .right .who-row .who-tag {
+    font-family: 'Bricolage Grotesque', 'Noto Serif SC', sans-serif;
+    font-weight: 700;
+    font-size: clamp(15px, 1.05vw, 18px);
+    color: var(--ink);
+  }
+  .s-quote .right .who-row .meta-tag {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(14px, 0.95vw, 16px);
+    color: var(--ink);
+    opacity: 0.78;
+  }
+
+  /* ─── SLIDE 4 — AI SCOPE (index layout) ─── */
+  .s-index { background: var(--paper); }
+  .s-index .frame {
+    position: absolute;
+    inset: clamp(96px, 10vh, 160px) clamp(60px, 5vw, 110px) clamp(110px, 11vh, 170px);
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: clamp(28px, 3vh, 50px);
+    z-index: 5;
+  }
+  .s-index .topbar {
+    display: flex; align-items: end; justify-content: space-between;
+    border-bottom: 1.5px solid var(--ink);
+    padding-bottom: clamp(14px, 1.6vh, 24px);
+    gap: 30px;
+  }
+  .s-index .topbar .h {
+    font-family: 'Noto Serif SC', 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: clamp(40px, min(5vw, 8.5vh), 100px);
+    line-height: 1;
+    color: var(--ink);
+  }
+  .s-index .topbar .lab-tag {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(15px, 1.05vw, 18px);
+    color: var(--ink);
+    text-align: right;
+    line-height: 1.4;
+  }
+  .s-index .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(16px, 1.8vw, 28px);
+    align-self: center;
+    align-items: start;
+  }
+  .s-index .card {
+    border: 1.5px solid var(--ink);
+    padding: clamp(20px, 2vh, 32px) clamp(18px, 1.6vw, 26px);
+    display: flex; flex-direction: column; gap: clamp(8px, 1vh, 14px);
+  }
+  .s-index .card .card-top {
+    display: flex; align-items: center; gap: clamp(8px, 0.8vw, 12px);
+    border-bottom: 1px solid rgba(181, 61, 42, 0.32);
+    padding-bottom: clamp(8px, 1vh, 14px);
+  }
+  .s-index .card .card-top .num-tag {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(14px, 1vw, 17px);
+    color: var(--ink);
+  }
+  .s-index .card .card-top .city-tag {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(13px, 0.9vw, 15px);
+    color: var(--ink);
+    margin-left: auto;
+  }
+  .s-index .card .nm {
+    font-family: 'Noto Serif SC', 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: clamp(22px, 2vw, 36px);
+    line-height: 1.1;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .s-index .card .desc {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(14px, 0.95vw, 16px);
+    line-height: 1.5;
+    color: var(--ink);
+    flex: 1;
+  }
+
+  /* ─── SLIDE 5 — VISUAL LANGUAGE (manifesto layout) ─── */
+  .s-manifesto { background: var(--paper); }
+  .s-manifesto .frame {
+    position: absolute;
+    inset: clamp(96px, 10vh, 160px) clamp(80px, 8vw, 200px) clamp(110px, 11vh, 170px);
+    display: grid;
+    grid-template-columns: 0.85fr 1fr;
+    gap: clamp(50px, 5vw, 100px);
+    align-items: center;
+    z-index: 5;
+  }
+  .s-manifesto .left .ed-row {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: clamp(20px, 2.4vh, 36px);
+  }
+  .s-manifesto .left .ed-row .ed-label {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(18px, 1.4vw, 24px);
+    color: var(--ink);
+  }
+  .s-manifesto .left .h {
+    font-family: 'Noto Serif SC', 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: clamp(42px, min(5.5vw, 9vh), 110px);
+    line-height: 1.05;
+    color: var(--ink);
+  }
+  .s-manifesto .right p {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(18px, 1.3vw, 24px);
+    line-height: 1.55;
+    color: var(--ink);
+    margin: 0 0 clamp(14px, 1.4vh, 22px);
+  }
+  .s-manifesto .right p .empha {
+    font-style: normal;
+    font-weight: 600;
+  }
+  .s-manifesto .right .sig {
+    margin-top: clamp(18px, 2vh, 30px);
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(16px, 1.2vw, 20px);
+    color: var(--ink);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .s-manifesto .right .sig .who-tag {
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  /* ─── SLIDE 6 — PAGE DESIGN (featured layout) ─── */
+  .s-featured { background: var(--paper); }
+  .s-featured .frame {
+    position: absolute;
+    inset: clamp(96px, 10vh, 160px) clamp(80px, 7vw, 160px) clamp(150px, 14vh, 220px);
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: clamp(40px, 4vw, 80px);
+    align-items: center;
+    z-index: 5;
+  }
+  .s-featured .left { display: flex; flex-direction: column; gap: clamp(18px, 2vh, 32px); }
+  .s-featured .left .ed-row {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .s-featured .left .ed-row .ed-label {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(18px, 1.3vw, 22px);
+    color: var(--ink);
+  }
+  .s-featured .left .ttl {
+    font-family: 'Noto Serif SC', 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: clamp(38px, min(4.5vw, 7.5vh), 90px);
+    line-height: 1.05;
+    color: var(--ink);
+  }
+  .s-featured .left .lede {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(17px, 1.2vw, 22px);
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 44ch;
+  }
+  .s-featured .left .stats-line {
+    display: flex; gap: clamp(16px, 1.6vw, 28px); align-items: center;
+    flex-wrap: wrap;
+  }
+  .s-featured .right {
+    display: flex; flex-direction: column;
+    justify-content: center;
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    padding: clamp(28px, 3vw, 56px) clamp(28px, 2.4vw, 48px);
+    gap: clamp(14px, 1.8vh, 24px);
+  }
+  .s-featured .right .info-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(20px, 2vw, 36px);
+    align-items: baseline;
+    border-bottom: 1px dashed rgba(181, 61, 42, 0.32);
+    padding-bottom: clamp(10px, 1.2vh, 18px);
+  }
+  .s-featured .right .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .s-featured .right .info-row .k {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(13px, 0.9vw, 15px);
+    color: var(--ink);
+    letter-spacing: 0.12em;
+  }
+  .s-featured .right .info-row .v {
+    font-family: 'Noto Serif SC', 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: clamp(18px, 1.4vw, 24px);
+    line-height: 1.2;
+    color: var(--ink);
+    text-align: right;
+  }
+  .s-featured .right .info-row .v.it {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(17px, 1.2vw, 22px);
+  }
+
+  /* ─── SLIDE 9 — CLOSING ─── */
+  .s-closing { background: var(--paper); }
+  .s-closing .frame {
+    position: absolute;
+    left: clamp(80px, 7vw, 160px);
+    right: clamp(80px, 7vw, 160px);
+    top: clamp(96px, 10vh, 160px);
+    bottom: clamp(280px, 28vh, 400px);
+    display: flex; flex-direction: column;
+    justify-content: center;
+    z-index: 5;
+  }
+  .s-closing .left { display: flex; flex-direction: column; gap: clamp(20px, 2.4vh, 38px); max-width: 60ch; }
+  .s-closing .left .ed-row {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .s-closing .left .ed-row .ed-label {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(18px, 1.3vw, 22px);
+    color: var(--ink);
+  }
+  .s-closing .left .h {
+    font-family: 'Noto Serif SC', 'Bricolage Grotesque', sans-serif;
+    font-weight: 700;
+    font-size: clamp(44px, min(5.5vw, 9vh), 110px);
+    line-height: 1.05;
+    color: var(--ink);
+  }
+  .s-closing .left .desc-it {
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(17px, 1.2vw, 22px);
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 42ch;
+  }
+  .s-closing .left .actions {
+    display: flex; gap: clamp(12px, 1.2vw, 20px); align-items: center;
+    flex-wrap: wrap;
+  }
+  .s-closing .footer-line {
+    position: absolute;
+    left: clamp(80px, 7vw, 160px);
+    right: clamp(80px, 7vw, 160px);
+    bottom: clamp(110px, 11vh, 160px);
+    display: flex; gap: clamp(40px, 4vw, 70px);
+    z-index: 5;
+  }
+  .s-closing .footer-line .colf {
+    border-top: 1px solid var(--ink);
+    padding-top: clamp(8px, 1vh, 14px);
+    font-family: 'Noto Serif SC', 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(14px, 0.95vw, 16px);
+    color: var(--ink);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .s-closing .footer-line .colf .ftag {
+    font-style: normal;
+    font-weight: 600;
+    margin-bottom: 2px;
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+  <div class="stage">
+
+    <!-- P1 COVER -->
+    <section class="slide s-cover active">
+      <div class="grid">
+        <div class="left">
+          <div class="ed-row">
+            <div class="ed-badge">AI</div>
+            <div class="ed-label">hermes agent · 2026</div>
+          </div>
+          <h1 class="title">Design Workflow<br/>in the AI Era</h1>
+          <div class="actions">
+            <span class="pill">Hermes Agent</span>
+            <span class="pill-divider">|</span>
+            <span class="pill">Efficiency</span>
+          </div>
+          <div class="stats">
+            Design is no longer about making visuals.<br/>
+            <span class="num">It is about building a system AI can understand and execute.</span>
+          </div>
+          <div class="bottom-block">
+            <span class="rect-tag">Designer judges. AI executes.</span>
+            <p class="tagline">Designers own judgment, AI owns execution — an order-of-magnitude leap in efficiency.</p>
+          </div>
+        </div>
+        <div class="right">
+          <div class="big-edition">09</div>
+          <div class="big-edition-lab">steps · from brief to delivery</div>
+          <div class="big-edition-meta">Full design workflow x deep AI integration<br/>Design efficiency, order of magnitude up</div>
+        </div>
+      </div>
+      <div class="pagenum">01 / 11</div>
+    </section>
+
+    <!-- P2 WORKFLOW -->
+    <section class="slide s-menu">
+      <div class="frame">
+        <div class="top-row">
+          <div class="kicker">The Full Picture</div>
+          <h2 class="h">The Full Design Workflow</h2>
+        </div>
+        <div class="courses">
+          <div class="course"><div class="num-tag">01</div><div class="item"><div class="nm">Brief</div></div><div class="pair-tag">Brief</div></div>
+          <div class="course"><div class="num-tag">02</div><div class="item"><div class="nm">Research</div><div class="desc">Competitive / User / Technical / Stakeholder</div></div><div class="pair-tag">Research</div></div>
+          <div class="course"><div class="num-tag">03</div><div class="item"><div class="nm">Product Design</div><div class="desc">Requirements / PRD / Feature Planning</div></div><div class="pair-tag">Product</div></div>
+          <div class="course"><div class="num-tag">04</div><div class="item"><div class="nm">UX Design</div><div class="desc">Information Architecture / Flows / Edge Cases / Copy</div></div><div class="pair-tag">UX</div></div>
+          <div class="course"><div class="num-tag">05</div><div class="item"><div class="nm">Lo-Fi Interactive Demo</div><div class="desc">Interactive prototype from wireframes</div></div><div class="pair-tag">optional</div></div>
+          <div class="course"><div class="num-tag">06</div><div class="item"><div class="nm">UI and Motion Design</div><div class="desc">Moodboard / Visual Language / Pages / Motion</div></div><div class="pair-tag">Highest</div></div>
+          <div class="course"><div class="num-tag">07</div><div class="item"><div class="nm">Design System</div><div class="desc">Extract Design Tokens / Component Library</div></div><div class="pair-tag">Highest</div></div>
+          <div class="course"><div class="num-tag">08</div><div class="item"><div class="nm">Hi-Fi Interactive Demo</div><div class="desc">Interactive prototype from visual designs</div></div><div class="pair-tag">optional</div></div>
+          <div class="course"><div class="num-tag">09</div><div class="item"><div class="nm">Deliver to Dev</div><div class="desc">Production-ready Figma files</div></div><div class="pair-tag">Deliver</div></div>
+        </div>
+      </div>
+      <div class="pagenum">02 / 11</div>
+    </section>
+
+    <!-- P3 GOALS -->
+    <section class="slide s-index">
+      <div class="frame">
+        <div class="topbar">
+          <div class="h">Three Core Goals</div>
+          <div class="lab-tag">Core Objectives</div>
+        </div>
+        <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="card">
+            <div class="card-top"><div class="num-tag">Goal 1</div></div>
+            <div class="nm">Rapid Visual<br/>Direction</div>
+            <div class="desc">Based on confirmed requirements and wireframes, quickly generate multiple visual directions for the team to choose from</div>
+          </div>
+          <div class="card">
+            <div class="card-top"><div class="num-tag">Goal 2</div></div>
+            <div class="nm">Efficient Page<br/>Extension</div>
+            <div class="desc">Once a visual direction is chosen, quickly and efficiently extend the remaining pages</div>
+          </div>
+          <div class="card">
+            <div class="card-top"><div class="num-tag">Goal 3</div></div>
+            <div class="nm">Auto-Generate<br/>Design System</div>
+            <div class="desc">Automatically synthesize and produce a Design System from visual language and concrete page designs</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum">03 / 11</div>
+    </section>
+
+    <!-- P4 PAIN -->
+    <section class="slide s-manifesto">
+      <div class="frame">
+        <div class="left">
+          <div class="ed-row">
+            <div class="ed-badge">!</div>
+            <div class="ed-label">the core pain</div>
+          </div>
+          <h2 class="h">Style<br/>Transfer<br/>Fails</h2>
+        </div>
+        <div class="right">
+          <p>Current DESIGN.md format lacks the <span class="empha">granularity</span> to describe visual language, resulting in insufficient style fidelity. It cannot reliably reproduce visual style across different products and interaction designs.</p>
+          <p>Specific gaps: <span class="empha">visual density</span> (whitespace ratio) / <span class="empha">shadow system</span> (multi-layer, glassmorphism) / <span class="empha">gradient patterns</span> / <span class="empha">motion specs</span> (easing, duration) / <span class="empha">reference imagery</span> / <span class="empha">image treatment</span> (rounded corners, overlays, filters)</p>
+          <div class="sig">
+            <div class="who-tag">Solution</div>
+            <div>Extend DESIGN.md format to cover these dimensions</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum">04 / 11</div>
+    </section>
+
+    <!-- P5 AI SCOPE -->
+    <section class="slide s-index">
+      <div class="frame">
+        <div class="topbar">
+          <div class="h">Where AI Fits</div>
+          <div class="lab-tag">Hermes Agent Participation</div>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <div class="card-top"><div class="num-tag">Step 06</div><div class="city-tag">Highest</div></div>
+            <div class="nm">UI and Motion</div>
+            <div class="desc">Visual exploration, page extension, motion design — AI replaces repetitive visual labor</div>
+          </div>
+          <div class="card">
+            <div class="card-top"><div class="num-tag">Step 07</div><div class="city-tag">Highest</div></div>
+            <div class="nm">Design System</div>
+            <div class="desc">Auto-extract Design Tokens and component library from designs — build from scratch, AI-generated</div>
+          </div>
+          <div class="card">
+            <div class="card-top"><div class="num-tag">Step 05</div><div class="city-tag">High</div></div>
+            <div class="nm">Lo-Fi Demo</div>
+            <div class="desc">Rapid interactive prototypes from wireframes — accelerate design validation</div>
+          </div>
+          <div class="card">
+            <div class="card-top"><div class="num-tag">Step 08</div><div class="city-tag">High</div></div>
+            <div class="nm">Hi-Fi Demo</div>
+            <div class="desc">Interactive prototypes from visual designs — cut manual demo production time</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum">05 / 11</div>
+    </section>
+
+    <!-- P6 STEP 6 DETAIL -->
+    <section class="slide s-menu">
+      <div class="frame">
+        <div class="top-row">
+          <div class="kicker">Step 06 · UI and Animation Design</div>
+          <h2 class="h">Five Sub-Steps</h2>
+        </div>
+        <div class="courses">
+          <div class="course"><div class="num-tag">6.1</div><div class="item"><div class="nm">Find Visual Moodboard</div><div class="desc">Collect visual references from the same industry/style. AI auto-collects and organizes into a moodboard.</div></div></div>
+          <div class="course"><div class="num-tag">6.2</div><div class="item"><div class="nm">Visual Workshop</div><div class="desc">Explore multiple visual directions from the moodboard. AI generates 3-4 previewable options.</div></div></div>
+          <div class="course"><div class="num-tag">6.3</div><div class="item"><div class="nm">Extract Visual Language</div><div class="desc">Extract visual language from the chosen direction, producing an enhanced DESIGN.md as AI visual guidance.</div></div><div class="pair-tag">Key Step</div></div>
+          <div class="course"><div class="num-tag">6.4</div><div class="item"><div class="nm">Produce Page Designs</div><div class="desc">Based on visual language + wireframes, produce concrete page visual designs.</div></div></div>
+          <div class="course"><div class="num-tag">6.5</div><div class="item"><div class="nm">Motion Design</div><div class="desc">Based on produced UI, extend the same design language to produce micro-animations, dynamic effects, launch animations.</div></div></div>
+        </div>
+      </div>
+      <div class="pagenum">06 / 11</div>
+    </section>
+
+    <!-- P7 PAGE DESIGN OUTPUT -->
+    <section class="slide s-featured">
+      <div class="frame">
+        <div class="left">
+          <div class="ed-row">
+            <div class="ed-badge">6.4</div>
+            <div class="ed-label">Step 6.4 · page design output</div>
+          </div>
+          <h2 class="ttl">AI Produces<br/>Page Designs</h2>
+          <p class="lede">Based on enhanced DESIGN.md visual language guidance + wireframes, AI produces concrete page visual designs. Three technical paths available.</p>
+          <div class="stats-line">
+            <span class="pill">Visual Language + Wireframes</span>
+          </div>
+        </div>
+        <div class="right">
+          <div class="info-row">
+            <div class="k">Path A</div>
+            <div class="v it">HTML/CSS Prototype</div>
+          </div>
+          <div class="info-row">
+            <div class="k">Path B</div>
+            <div class="v it">Direct to Figma</div>
+          </div>
+          <div class="info-row">
+            <div class="k">Path C</div>
+            <div class="v it">HTML Confirm -> Figma</div>
+          </div>
+          <div class="info-row">
+            <div class="k">Recommended</div>
+            <div class="v">Path C</div>
+          </div>
+          <div class="info-row">
+            <div class="k">Tools</div>
+            <div class="v it">Hermes + Claude Code + Figma MCP</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum">07 / 11</div>
+    </section>
+
+    <!-- P8 DESIGN SYSTEM -->
+    <section class="slide s-featured">
+      <div class="frame">
+        <div class="left">
+          <div class="ed-row">
+            <div class="ed-badge">07</div>
+            <div class="ed-label">Step 7 · Design System</div>
+          </div>
+          <h2 class="ttl">Codify<br/>Design System</h2>
+          <p class="lede">Status: no existing Design System — building from scratch. Automatically synthesize and produce from visual language and concrete page designs.</p>
+          <div class="stats-line">
+            <span class="pill">From Scratch</span>
+            <span class="pill">AI Auto-Extract</span>
+          </div>
+        </div>
+        <div class="right">
+          <div class="info-row">
+            <div class="k">Output 1</div>
+            <div class="v it">Design Token File</div>
+          </div>
+          <div class="info-row">
+            <div class="k">Output 2</div>
+            <div class="v it">Figma Design System</div>
+          </div>
+          <div class="info-row">
+            <div class="k">Output 3</div>
+            <div class="v it">Design System Visualization</div>
+          </div>
+          <div class="info-row">
+            <div class="k">Output 4</div>
+            <div class="v it">Documentation Slides</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum">08 / 11</div>
+    </section>
+
+    <!-- P9 TECH PATH -->
+    <section class="slide s-index">
+      <div class="frame">
+        <div class="topbar">
+          <div class="h">Confirmed Technical Paths</div>
+          <div class="lab-tag">Three Validated Paths</div>
+        </div>
+        <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="card">
+            <div class="card-top"><div class="num-tag">Path 1</div></div>
+            <div class="nm">DESIGN.md<br/>Format Extension</div>
+            <div class="desc">Extend Google DESIGN.md format to add missing visual dimensions, solving the style fidelity problem</div>
+          </div>
+          <div class="card">
+            <div class="card-top"><div class="num-tag">Path 2</div></div>
+            <div class="nm">HTML Prototype -><br/>Figma Sync</div>
+            <div class="desc">Hermes generates HTML/CSS prototype. After confirmation, sync to Figma via Claude Code + Figma MCP</div>
+          </div>
+          <div class="card">
+            <div class="card-top"><div class="num-tag">Path 3</div></div>
+            <div class="nm">Indirect Figma<br/>Connection</div>
+            <div class="desc">Hermes does not directly support Figma, but can indirectly connect via Claude Code (which supports Figma MCP)</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum">09 / 11</div>
+    </section>
+
+    <!-- P10 OPEN ITEMS -->
+    <section class="slide s-quote">
+      <div class="frame">
+        <div class="right">
+          <div class="kicker">Open Items</div>
+          <p class="qbody"><span class="it-emph">5 things</span> still need confirmation</p>
+          <div class="who-row">
+            <div class="who-tag">To Be Confirmed</div>
+            <div class="meta-tag">Step 5/8 specifics / Enhanced DESIGN.md structure / HTML-to-Figma feasibility / Motion design format</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagenum">10 / 11</div>
+    </section>
+
+    <!-- P11 CLOSING -->
+    <section class="slide s-closing">
+      <div class="frame">
+        <div class="left">
+          <div class="ed-row">
+            <div class="ed-badge">.</div>
+            <div class="ed-label">summary and next steps</div>
+          </div>
+          <h2 class="h">Next<br/>Steps</h2>
+          <p class="desc-it">Core logic: document-driven, prototype-first, tool-collaborative. DESIGN.md is the single source of truth for visual language. Confirm in HTML first, then sync to Figma — ensuring feasibility.</p>
+          <div class="actions">
+            <span class="pill">Validate HTML to Figma Path</span>
+            <span class="pill">Define Enhanced DESIGN.md</span>
+            <span class="pill">Step 6 Deep Demo</span>
+          </div>
+        </div>
+      </div>
+      <div class="footer-line">
+        <div class="colf">
+          <span class="ftag">Core Principle</span>
+          Document-driven. AI augments, never replaces, design judgment.
+        </div>
+        <div class="colf">
+          <span class="ftag">Tech Stack</span>
+          Hermes Agent / Claude Code / Figma MCP
+        </div>
+        <div class="colf">
+          <span class="ftag">Next</span>
+          Validate feasibility / Pilot / Scale
+        </div>
+      </div>
+      <div class="pagenum">11 / 11</div>
+    </section>
+
+
+  </div>
+</div>
+
+<div class="nav-hint">← / → · space</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let current = 0;
+  function show(i) {
+    if (i < 0) i = 0;
+    if (i > slides.length - 1) i = slides.length - 1;
+    slides[current].classList.remove('active');
+    slides[i].classList.add('active');
+    current = i;
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); show(current + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp')               { e.preventDefault(); show(current - 1); }
+    else if (e.key === 'Home')                                            { e.preventDefault(); show(0); }
+    else if (e.key === 'End')                                             { e.preventDefault(); show(slides.length - 1); }
+  });
+  let tx = null;
+  document.addEventListener('touchstart', (e) => { tx = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (tx == null) return;
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 40) show(current + (dx < 0 ? 1 : -1));
+    tx = null;
+  });
+</script>
+
+</body>
+</html>
